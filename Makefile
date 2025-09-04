@@ -6,10 +6,12 @@ TF_PLAN_OUT := tfplan
 # Detect OS
 ifeq ($(OS),Windows_NT)
     CLEAN_CMD = del /Q $(TF_DIR)\$(TF_PLAN_OUT) 2>nul & rmdir /S /Q $(TF_DIR)\.terraform 2>nul & del /Q $(TF_DIR)\.terraform.lock.hcl 2>nul
-    CD_CMD = cd $(TF_DIR) && 
+    CD_CMD = cd $(TF_DIR) &&
+    JENKINS_INSTALL_CMD = powershell -ExecutionPolicy ByPass -File scripts\install-jenkins.ps1
 else
     CLEAN_CMD = rm -f $(TF_DIR)/$(TF_PLAN_OUT) && rm -rf $(TF_DIR)/.terraform && rm -f $(TF_DIR)/.terraform.lock.hcl
-    CD_CMD = cd $(TF_DIR) && 
+    CD_CMD = cd $(TF_DIR) &&
+    JENKINS_INSTALL_CMD = bash scripts/install-jenkins.sh
 endif
 
 # Default target
@@ -57,3 +59,8 @@ destroy:
 clean:
 	@echo "==> Cleaning up..."
 	$(CLEAN_CMD)
+
+.PHONY: install-jenkins
+install-jenkins:
+	@echo "==> Installing Jenkins via Helm chart..."
+	$(JENKINS_INSTALL_CMD)

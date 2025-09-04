@@ -55,6 +55,23 @@ This project automates the setup of a local Kubernetes cluster using Minikube an
    make clean
    ```
 
+## Jenkins Installation
+
+1. **Download Jenkins Helm chart locally:**
+   ```sh
+   mkdir -p helm
+   helm repo add jenkins https://charts.jenkins.io
+   helm repo update
+   helm pull jenkins/jenkins --untar --untardir helm
+   ```
+
+2. **Install Jenkins using the provided script:**
+   ```sh
+   make install-jenkins
+   ```
+
+This will deploy Jenkins to your Minikube cluster using the local chart.
+
 ## Troubleshooting
 
 - If you see `minikube not recognized`, add the Minikube binary directory to your PATH and restart your shell or VS Code.
