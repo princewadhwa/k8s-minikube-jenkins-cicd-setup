@@ -1,0 +1,46 @@
+pipeline {
+    agent any
+    environment {
+        BLUE_IMAGE = "nodejs-app:blue"
+        GREEN_IMAGE = "nodejs-app:green"
+    }
+    stages {
+        stage('Build Blue') {
+            steps {
+                script {
+                    docker.build(BLUE_IMAGE)
+                }
+            }
+        }
+        stage('Deploy Blue') {
+            steps {
+                script {
+                    sh 'docker save nodejs-app:blue | (eval $(minikube docker-env) && docker load)'
+                    sh 'kubectl apply -f k8s-blue.yaml'
+                }
+            }
+        }
+        stage('Build Green') {
+            steps {
+                script {
+                    docker.build(GREEN_IMAGE)
+                }
+            }
+        }
+        stage('Deploy Green') {
+            steps {
+                script {
+                    sh 'docker save nodejs-app:green | (eval $(minikube docker-env) && docker load)'
+                    sh 'kubectl apply -f k8s-green.yaml'
+                }
+            }
+        }
+        stage('Switch Traffic to Green') {
+            steps {
+                script {
+                    sh 'kubectl patch service nodejs-app-service -p \'{"spec":{"selector":{"app":"nodejs-app","version":"green"}}}\''
+                }
+            }
+        }
+    }
+}
