@@ -1,0 +1,44 @@
+# Terraform state files
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Plan files
+tfplan
+
+# Local terraform directory
+.terraform/
+.terraform.lock.hcl
+
+# Override files (for local testing)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Sensitive variable files
+# terraform.tfvars
+*.auto.tfvars
+
+# Backup files
+*.bak
+*.backup
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+*.tmp
+*.log
+
+# Ignore local scripts output if any
+scripts/output/
+
+# Ignore executable files
+*.exe
+*.out
+*.bin
