@@ -37,3 +37,9 @@ variable "os_type" {
     error_message = "os_type must be either 'linux' or 'windows'."
   }
 }
+
+variable "nodes" {
+  description = "Number of nodes in the Minikube cluster"
+  type        = number
+  default     = 1
+}

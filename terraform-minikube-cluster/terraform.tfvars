@@ -4,3 +4,4 @@ driver       = "docker"
 cpus         = 2
 memory       = 4096
 os_type      = "windows"
+nodes        = 2

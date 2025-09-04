@@ -11,7 +11,7 @@ resource "null_resource" "minikube_cluster" {
 
   provisioner "local-exec" {
     when        = create
-    command     = "minikube start --driver=${var.driver} --kubernetes-version=${var.k8s_version} --cpus=${var.cpus} --memory=${var.memory} --profile=${var.cluster_name}"
+    command     = "minikube start --driver=${var.driver} --kubernetes-version=${var.k8s_version} --cpus=${var.cpus} --memory=${var.memory} --profile=${var.cluster_name} --nodes=${var.nodes}"
     interpreter = var.os_type == "windows" ? ["PowerShell", "-Command"] : ["/bin/bash", "-c"]
   }
 
@@ -28,5 +28,6 @@ resource "null_resource" "minikube_cluster" {
     cpus         = var.cpus
     memory       = var.memory
     os_type      = var.os_type
+    nodes        = var.nodes
   }
 }

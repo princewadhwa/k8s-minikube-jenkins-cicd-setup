@@ -6,4 +6,5 @@ module "minikube" {
   cpus         = var.cpus
   memory       = var.memory
   os_type      = var.os_type
+  nodes        = 2
 }
