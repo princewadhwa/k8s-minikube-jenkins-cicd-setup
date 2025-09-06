@@ -1,0 +1,21 @@
+replicaCount: 1
+image:
+  name: blue-green-demo
+  tag: v1
+  pullPolicy: IfNotPresent
+
+namespace: blue-green-demo
+
+deployColor: blue
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "200m"

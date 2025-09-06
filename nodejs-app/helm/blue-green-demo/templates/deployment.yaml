@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "blue-green-demo.fullname" . }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "blue-green-demo.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    deployColor: {{ .Values.deployColor }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "blue-green-demo.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "blue-green-demo.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        deployColor: {{ .Values.deployColor }}
+    spec:
+      containers:
+        - name: node-app
+          image: "{{ .Values.image.name }}:{{ .Values.image.tag }}"
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DEPLOY_COLOR
+              value: {{ .Values.deployColor | quote }}
