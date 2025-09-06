@@ -5,4 +5,4 @@ NAMESPACE=jenkins
 
 kubectl create namespace $NAMESPACE || true
 
-helm install jenkins ../helm/jenkins --namespace $NAMESPACE --create-namespace
+helm upgrade install jenkins ../helm/jenkins --namespace $NAMESPACE --create-namespace -f ../helm/jenkins/values.yaml

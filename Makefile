@@ -16,7 +16,7 @@ endif
 
 # Default target
 .PHONY: all
-all: init validate fmt plan
+all: init validate fmt plan apply install-jenkins
 
 ## Initialize Terraform (with backend & providers)
 .PHONY: init
@@ -44,7 +44,7 @@ plan:
 
 ## Apply execution plan
 .PHONY: apply
-apply: all
+apply:
 	@echo "==> Applying Terraform plan..."
 	$(CD_CMD) $(TF_COMMAND) apply $(TF_PLAN_OUT)
 
