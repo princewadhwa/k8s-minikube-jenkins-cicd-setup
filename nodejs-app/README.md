@@ -32,43 +32,43 @@ The Node.js app listens on port 3000 and displays a message indicating the curre
 
 ## How to Use
 
-### 1. Build Docker Image
-    ```sh
+1. **Build Docker Image:**
+   ```sh
    make build
    ```
 This builds the Docker image locally as `blue-green-demo:v1`.
 
 ---
 
-### 2. Deploy Blue Version
+2. **Deploy Blue Version:**
     ```sh
    make helm-install-blue
    ```
 
 ---
 
-### 3. Deploy Green Version
+3. **Deploy Green Version:**
     ```sh
    make helm-install-green
    ```
 
 ---
 
-### 4. Apply shared `blue-green-service` **managed separately in k8s-manifests folder** (outside Helm releases) to avoid Helm ownership conflicts.
+4. **Apply shared `blue-green-service` **managed separately in k8s-manifests folder** (outside Helm releases) to avoid Helm ownership conflicts.**
     ```sh
    make helm-install-green
    ```
 
 ---
 
-### 5. Switch Traffic to Green Version
+5. **Switch Traffic to Green Version:**
     ```sh
    make switch-traffic-to-green
    ```
 
 ---
 
-### 6. Switch Traffic to Blue Version
+6. **Switch Traffic to Blue Version:**
     ```sh
    make switch-traffic-to-blue
    ```
