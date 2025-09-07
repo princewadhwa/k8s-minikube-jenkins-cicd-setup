@@ -111,14 +111,22 @@ spec:
         }
     }
 
+    stage('Helm Lint') {
+      steps {
+        sh "cd nodejs-app && make helm-lint"
+        }
+    }
+
     stage('Helm Install Blue') {
       steps {
+        input message: 'Approve deployment to BLUE environment?', ok: 'Deploy Blue'
         sh "cd nodejs-app && make helm-install-blue IMAGE_NAME=${env.IMAGE_NAME} IMAGE_VERSION=${env.IMAGE_TAG} && make k8s-apply"
         }
     }
 
     stage('Helm Install Green') {
       steps {
+        input message: 'Approve deployment to GREEN environment?', ok: 'Deploy Green'
         sh "cd nodejs-app && make helm-install-green IMAGE_NAME=${env.IMAGE_NAME} IMAGE_VERSION=${env.IMAGE_TAG}"
         }
     }

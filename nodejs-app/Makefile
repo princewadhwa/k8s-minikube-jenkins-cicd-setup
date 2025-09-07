@@ -10,9 +10,9 @@ ifneq (,$(wildcard .env))
 	export
 endif
 
-.PHONY: build docker-lint sonar-scan test helm-install-blue helm-install-green helm-uninstall-blue helm-uninstall-green k8s-apply k8s-delete deploy-all uninstall-all switch-traffic-to-blue switch-traffic-to-green
+.PHONY: build docker-lint sonar-scan test helm-install-blue helm-install-green helm-lint helm-uninstall-blue helm-uninstall-green k8s-apply k8s-delete deploy-all uninstall-all switch-traffic-to-blue switch-traffic-to-green
 
-deploy-all: build helm-install-blue helm-install-green k8s-apply
+deploy-all: build helm-lint helm-install-blue helm-install-green k8s-apply
 uninstall-all: helm-uninstall-blue helm-uninstall-green k8s-delete
 
 # Build docker image
@@ -41,6 +41,11 @@ sonar-scan:
 		-w /usr/src \
 		sonarsource/sonar-scanner-cli:latest
 	@echo "SonarQube scan completed."
+
+helm-lint:
+	@echo "Linting Helm chart..."
+	helm lint $(CHART_PATH)
+	@echo "Helm chart linting passed."
 
 helm-install-blue:
 	@echo "Installing Helm release blue-version with color blue..."
