@@ -1,0 +1,59 @@
+# --------- Stage 1: Download kubectl ----------
+FROM alpine:3.19 AS kubectl-downloader
+ARG KUBECTL_VERSION
+RUN apk add --no-cache curl
+RUN KUBECTL_VERSION="${KUBECTL_VERSION:-$(curl -Ls https://dl.k8s.io/release/stable.txt)}" && \
+    curl -Lo /kubectl "https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl" && \
+    chmod +x /kubectl
+
+# --------- Stage 2: Download Helm ----------
+FROM alpine:3.19 AS helm-downloader
+RUN apk add --no-cache curl tar
+RUN HELM_VERSION=$(curl -Ls https://api.github.com/repos/helm/helm/releases/latest | grep tag_name | cut -d '"' -f 4) && \
+    curl -Lo /helm.tar.gz "https://get.helm.sh/helm-${HELM_VERSION}-linux-amd64.tar.gz" && \
+    tar -xzf /helm.tar.gz -C / && \
+    mv /linux-amd64/helm /helm && chmod +x /helm
+
+# --------- Stage 3: Download Kaniko ----------
+FROM alpine:3.19 AS kaniko-downloader
+RUN apk add --no-cache curl
+RUN curl -Lo /kaniko-executor https://github.com/GoogleContainerTools/kaniko/releases/latest/download/executor-linux-amd64 && chmod +x /kaniko-executor
+
+# --------- Final Stage: Jenkins Agent ----------
+FROM jenkins/inbound-agent:latest
+
+USER root
+
+# Essential runtime tools
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    curl \
+    make \
+    git \
+    bash \
+    tar \
+    wget \
+    ca-certificates \
+    gnupg \
+    unzip \
+    docker.io && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy static binaries from previous stages
+COPY --from=kubectl-downloader /kubectl /usr/local/bin/kubectl
+COPY --from=helm-downloader /helm /usr/local/bin/helm
+COPY --from=kaniko-downloader /kaniko-executor /kaniko/executor
+
+# Install SonarScanner CLI
+RUN wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-4.8.0.2856-linux.zip && \
+    unzip sonar-scanner-cli-4.8.0.2856-linux.zip -d /opt && \
+    rm sonar-scanner-cli-4.8.0.2856-linux.zip && \
+    ln -s /opt/sonar-scanner-4.8.0.2856-linux/bin/sonar-scanner /usr/local/bin/sonar-scanner
+
+# Ensure npm is available in PATH
+ENV PATH="/usr/local/bin:$PATH"
+
+# USER jenkins
+ENV PATH="/home/jenkins/bin:${PATH}"

@@ -42,3 +42,7 @@ scripts/output/
 *.exe
 *.out
 *.bin
+
+minikube-kubeconfig.yaml
+.dockerignore
+*test

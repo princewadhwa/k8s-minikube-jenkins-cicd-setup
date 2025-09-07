@@ -27,10 +27,11 @@ docker-lint:
 	@echo "Dockerfile linting passed."
 
 test:
+	@echo "PROJECT_DIR is ${PROJECT_DIR}"
 	@echo "Running tests with coverage in Docker container..."
-	@docker run --rm -v ${PROJECT_DIR}/src:/app -w /app -e NODE_ENV=development node:18-alpine sh -c "npm install --quiet && npm test"
+	@docker run --rm -v ${PROJECT_DIR}/src:/app -w /app -e NODE_ENV=development node:18-alpine sh -c "ls -lrt && npm install --quiet && npm test"
 
-sonar-scan: test
+sonar-scan:
 	@echo "Running SonarQube scan..."
 	@echo "current dir: ${PROJECT_DIR}"
 	@docker run \
@@ -43,11 +44,11 @@ sonar-scan: test
 
 helm-install-blue:
 	@echo "Installing Helm release blue-version with color blue..."
-	helm upgrade --install blue-version $(CHART_PATH) --namespace $(NAMESPACE) --create-namespace --set deployColor=blue --wait --atomic --timeout 2m
+	helm upgrade --install blue-version $(CHART_PATH) --namespace $(NAMESPACE) --create-namespace --set deployColor=blue --set image.name=$(IMAGE_NAME) --set image.tag=$(IMAGE_VERSION) --wait --atomic --timeout 2m
 
 helm-install-green:
 	@echo "Installing Helm release green-version with color green..."
-	helm upgrade --install green-version $(CHART_PATH) --namespace $(NAMESPACE) --create-namespace --set deployColor=green --wait --atomic --timeout 2m
+	helm upgrade --install green-version $(CHART_PATH) --namespace $(NAMESPACE) --create-namespace --set deployColor=green --set image.name=$(IMAGE_NAME) --set image.tag=$(IMAGE_VERSION) --wait --atomic --timeout 2m
 
 k8s-apply:
 	@echo "Applying Kubernetes manifests..."

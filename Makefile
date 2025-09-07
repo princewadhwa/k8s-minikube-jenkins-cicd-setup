@@ -2,6 +2,8 @@
 TF_DIR := terraform-minikube-cluster
 TF_COMMAND := terraform
 TF_PLAN_OUT := tfplan
+IMAGE_NAME := jenkins-agent
+IMAGE_VERSION := v1
 
 # Detect OS
 ifeq ($(OS),Windows_NT)
@@ -16,7 +18,7 @@ endif
 
 # Default target
 .PHONY: all
-all: init validate fmt plan apply install-jenkins
+all: init validate fmt plan apply install-jenkins build-agent
 
 ## Initialize Terraform (with backend & providers)
 .PHONY: init
@@ -64,3 +66,8 @@ clean:
 install-jenkins:
 	@echo "==> Installing Jenkins via Helm chart..."
 	$(JENKINS_INSTALL_CMD)
+
+# Build Jenkins docker agent image
+build-agent:
+	@echo "Building Jenkins Docker agent image..."
+	minikube image build -t $(IMAGE_NAME):$(IMAGE_VERSION) -f Jenkins-Agent-Dockerfile .

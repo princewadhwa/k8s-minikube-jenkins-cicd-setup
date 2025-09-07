@@ -28,7 +28,7 @@ metadata:
   name: jenkins-deploy-binding
 subjects:
   - kind: ServiceAccount
-    name: jenkins
+    name: default
     namespace: jenkins
 roleRef:
   kind: ClusterRole

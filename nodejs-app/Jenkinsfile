@@ -1,46 +1,123 @@
 pipeline {
-    agent any
-    environment {
-        BLUE_IMAGE = "nodejs-app:blue"
-        GREEN_IMAGE = "nodejs-app:green"
+  agent {
+    kubernetes {
+      label 'jenkins-agent'
+      defaultContainer 'jenkins-agent'
+      yaml """
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: jenkins-agent
+    image: jenkins-agent:v1
+    tty: true
+    volumeMounts:
+      - name: workspace-volume
+        mountPath: /home/jenkins/agent
+      - name: docker-socket
+        mountPath: /var/run/docker.sock
+  volumes:
+    - name: workspace-volume
+      emptyDir: {}
+    - name: docker-socket
+      hostPath:
+        path: /var/run/docker.sock
+        type: Socket
+  restartPolicy: Never
+"""
     }
+  }
+
+  environment {
+    PATH = "/home/jenkins/bin:/kaniko:${PATH}"
+    PROJECT_DIR = "${env.WORKSPACE}"
+    IMAGE_NAME = 'princewadhwa70/blue-green-demo'
+    // IMAGE_TAG = "v${BUILD_NUMBER}"
+  }
+
     stages {
-        stage('Build Blue') {
-            steps {
-                script {
-                    docker.build(BLUE_IMAGE)
-                }
-            }
+        stage('Checkout Code') {
+        steps {
+            git branch: 'main', url: 'git@github.com:princewadhwa/k8s-minikube-jenkins-cicd-setup.git', credentialsId: 'git-ssh-credentials'
         }
-        stage('Deploy Blue') {
-            steps {
-                script {
-                    sh 'docker save nodejs-app:blue | (eval $(minikube docker-env) && docker load)'
-                    sh 'kubectl apply -f k8s-blue.yaml'
-                }
-            }
         }
-        stage('Build Green') {
-            steps {
-                script {
-                    docker.build(GREEN_IMAGE)
-                }
-            }
+  
+    stage('Dockerfile Lint') {
+        steps {
+        sh 'cd nodejs-app && make docker-lint'
         }
-        stage('Deploy Green') {
-            steps {
-                script {
-                    sh 'docker save nodejs-app:green | (eval $(minikube docker-env) && docker load)'
-                    sh 'kubectl apply -f k8s-green.yaml'
-                }
-            }
+    }
+      
+    stage('Test') {
+    environment {
+        NODE_ENV = 'development'
+    }
+        steps {
+        dir("${PROJECT_DIR}/nodejs-app/src") {
+            sh '''
+            npm install --quiet
+            npm test
+            '''
         }
-        stage('Switch Traffic to Green') {
-            steps {
-                script {
-                    sh 'kubectl patch service nodejs-app-service -p \'{"spec":{"selector":{"app":"nodejs-app","version":"green"}}}\''
+        }
+    }
+      
+    stage('Sonar Scan') {
+        steps {
+            withSonarQubeEnv('SONAR_HOST_URL') {
+            script {
+                docker.image('sonarsource/sonar-scanner-cli').inside {
+                sh '''
+                    cd nodejs-app
+                    sonar-scanner
+                '''
+                    }
                 }
             }
         }
     }
+
+    stage('Build and Push Docker Image') {
+        steps {
+            script {
+                sh 'git config --global --add safe.directory $WORKSPACE'
+                def branchName = sh(script: "git rev-parse --abbrev-ref HEAD", returnStdout: true).trim()
+                def safeBranchName = branchName.replaceAll('[^a-zA-Z0-9_.-]', '-')
+                def gitSha = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                def imageTag = "${safeBranchName}-${gitSha}"
+
+                // Login, build and push using the dynamic tag
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                sh """
+                    echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+                    
+                    docker build -t ${env.IMAGE_NAME}:${imageTag} nodejs-app/
+                    
+                    docker push ${env.IMAGE_NAME}:${imageTag}
+                """
+                }
+            }
+        }
+    }
+
+
+    stage('Helm Install Blue') {
+      steps {
+        sh "cd nodejs-app && IMAGE_NAME=${env.IMAGE_NAME} IMAGE_TAG=${env.IMAGE_TAG} make helm-install-blue"
+      }
+    }
+
+    stage('Helm Install Green') {
+      steps {
+        sh "cd nodejs-app && IMAGE_NAME=${env.IMAGE_NAME} IMAGE_TAG=${env.IMAGE_TAG} make helm-install-green"
+      }
+    }
+
+    stage('K8s Apply') {
+      steps {
+        sh 'cd nodejs-app && make k8s-apply'
+      }
+    }
+  }
 }
+
